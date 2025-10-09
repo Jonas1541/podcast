@@ -16,7 +16,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/podcasts")
+@RequestMapping("/api/podcasts")
 public class PodcastController {
 
     @Autowired
