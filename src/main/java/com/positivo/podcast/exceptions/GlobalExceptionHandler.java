@@ -60,6 +60,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(err);
     }
 
+    @ExceptionHandler(FileUploadException.class)
+    public ResponseEntity<StandardError> handleFileUploadException(FileUploadException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        StandardError err = new StandardError(
+            Instant.now(),
+            status.value(),
+            "Erro de Upload de Arquivo",
+            e.getMessage(), // Mensagem vinda da exceção (ex: "Falha ao ler o arquivo...")
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(err);
+    }
+
     // Handler genérico para qualquer outra exceção não tratada
     @ExceptionHandler(Exception.class)
     public ResponseEntity<StandardError> handleGenericException(Exception e, HttpServletRequest request) {

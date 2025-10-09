@@ -2,11 +2,14 @@ package com.positivo.podcast.controllers;
 
 import com.positivo.podcast.dtos.request.PodcastRequestDto;
 import com.positivo.podcast.dtos.response.PodcastResponseDto;
+import com.positivo.podcast.dtos.upload.PodcastUploadDto;
 import com.positivo.podcast.services.PodcastService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -34,6 +37,18 @@ public class PodcastController {
     @PostMapping
     public ResponseEntity<PodcastResponseDto> create(@RequestBody @Valid PodcastRequestDto createDto) {
         PodcastResponseDto createdDto = podcastService.create(createDto);
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(createdDto.id()).toUri();
+        return ResponseEntity.created(uri).body(createdDto);
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PodcastResponseDto> createWithUpload(
+            @RequestPart("dados") @Valid PodcastUploadDto dto,
+            @RequestPart("audio") MultipartFile audio,
+            @RequestPart(value = "capa", required = false) MultipartFile capa) {
+
+        PodcastResponseDto createdDto = podcastService.createWithUpload(dto, audio, capa);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(createdDto.id()).toUri();
         return ResponseEntity.created(uri).body(createdDto);
