@@ -1,0 +1,19 @@
+# --- ATENÇÃO: COPIE ESTE ARQUIVO PARA 'application-prod.properties' E PREENCHA COM OS DADOS REAIS ---
+
+# Configuração do Servidor
+server.port=80
+
+# Configuração do Banco de Dados de Produção
+spring.datasource.url=<INSERIR_URL_DO_BANCO_DE_PRODUCAO>
+spring.datasource.username=<INSERIR_USUARIO_DE_PRODUCAO>
+spring.datasource.password=<INSERIR_SENHA_DE_PRODUCAO>
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# Configuração do Supabase Storage de Produção
+supabase.url=<INSERIR_URL_DO_SUPABASE_DE_PRODUCAO>
+supabase.key.anon=<INSERIR_CHAVE_ANON_DE_PRODUCAO>
+supabase.key.service=<INSERIR_CHAVE_SERVICE_DE_PRODUCAO>
+
+# Configuração do JWT de Produção
+jwt.secret=<INSERIR_SEGREDO_JWT_DE_PRODUCAO>
+jwt.expiration.ms=86400000

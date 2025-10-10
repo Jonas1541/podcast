@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Configuração da Aplicação e Segredos ###
+# Nunca versione arquivos de configuração com dados sensíveis de produção.
+application-prod.properties
