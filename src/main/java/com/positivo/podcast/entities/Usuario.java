@@ -22,6 +22,13 @@ public class Usuario implements UserDetails {
     public Usuario() {
     }
 
+    public Usuario(String nome, String email, String senha, String role) {
+        this.nome = nome;
+        this.email = email;
+        this.senha = senha;
+        this.role = role;
+    }
+
     // Métodos da interface UserDetails do Spring Security
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

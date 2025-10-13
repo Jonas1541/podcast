@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -33,48 +34,50 @@ public class AuthService implements UserDetailsService {
     @Lazy
     private AuthenticationManager authenticationManager;
 
-    public AuthResponseDto login(LoginRequestDto loginRequestDto) { // 1. Mudar o tipo de retorno
-        var usernamePassword = new UsernamePasswordAuthenticationToken(
-            loginRequestDto.email(),
-            loginRequestDto.senha()
+    public AuthResponseDto login(LoginRequestDto loginRequestDto) {
+        // Cria o objeto de autenticação com as credenciais
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                loginRequestDto.email(),
+                loginRequestDto.senha()
         );
-        var auth = this.authenticationManager.authenticate(usernamePassword);
 
-        // 2. Pegar o objeto Usuario completo
-        var usuario = (Usuario) auth.getPrincipal();
+        // O AuthenticationManager processa a autenticação
+        Authentication authentication = authenticationManager.authenticate(authToken);
 
-        // 3. Gerar o token
-        var token = tokenService.generateToken(usuario);
+        // Extrai o usuário autenticado do objeto Authentication
+        Usuario usuario = (Usuario) authentication.getPrincipal();
 
-        // 4. Criar o DTO de resposta do usuário
-        var usuarioDto = new UsuarioResponseDto(
+        // Gera o token JWT para o usuário
+        String token = tokenService.generateToken(usuario);
+
+        // Cria o DTO com os dados do usuário para a resposta
+        UsuarioResponseDto usuarioDto = new UsuarioResponseDto(
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
                 usuario.getRole());
 
-        // 5. Retornar o DTO de autenticação completo
+        // Retorna a resposta completa
         return new AuthResponseDto(token, usuarioDto);
     }
 
     public void register(RegisterRequestDto registerRequestDto) {
-        // Verifica se o usuário já existe
         if (usuarioRepository.findByEmail(registerRequestDto.email()).isPresent()) {
             throw new EmailAlreadyExistsException("O email '" + registerRequestDto.email() + "' já está em uso.");
         }
 
-        Usuario novoUsuario = new Usuario();
-        novoUsuario.setNome(registerRequestDto.nome());
-        novoUsuario.setEmail(registerRequestDto.email());
-        novoUsuario.setSenha(passwordEncoder.encode(registerRequestDto.senha()));
-        novoUsuario.setRole("USER"); // Define a role padrão para novos usuários
+        Usuario novoUsuario = new Usuario(
+                registerRequestDto.nome(),
+                registerRequestDto.email(),
+                passwordEncoder.encode(registerRequestDto.senha()),
+                "USER" // Role padrão
+        );
 
         usuarioRepository.save(novoUsuario);
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // O Spring Security usa este método para encontrar o usuário pelo email
         return usuarioRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com o email: " + username));
     }
