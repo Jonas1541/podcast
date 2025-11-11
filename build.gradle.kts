@@ -30,6 +30,12 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
 
+    // Adiciona o "Bill of Materials" (BOM) do AWS SDK V2
+    // Isso gerencia as versões de todas as bibliotecas da AWS
+    implementation(platform("software.amazon.awssdk:bom:2.37.2"))
+    // Adiciona o cliente S3 específico
+    implementation("software.amazon.awssdk:s3")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")

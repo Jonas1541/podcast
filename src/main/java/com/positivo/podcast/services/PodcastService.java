@@ -7,6 +7,7 @@ import com.positivo.podcast.entities.Podcast;
 import com.positivo.podcast.exceptions.ResourceNotFoundException;
 import com.positivo.podcast.repositories.PodcastRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value; // IMPORTAR @Value
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,13 @@ public class PodcastService {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    // INJETA OS NOMES DOS BUCKETS
+    @Value("${minio.bucket.audios}")
+    private String audioBucket;
+
+    @Value("${minio.bucket.capas}")
+    private String capaBucket;
 
     @Transactional(readOnly = true)
     public List<PodcastResponseDto> findAll() {
@@ -50,20 +58,18 @@ public class PodcastService {
     }
 
     public PodcastResponseDto createWithUpload(PodcastUploadDto dto, MultipartFile audio, MultipartFile capa) {
-        // 1. Faz o upload dos arquivos para o Supabase Storage
-        String audioUrl = fileStorageService.upload(audio, "audios"); // "audios" é o nome do bucket
+        // USA AS VARIÁVEIS INJETADAS
+        String audioUrl = fileStorageService.upload(audio, audioBucket);
         String capaUrl = (capa != null && !capa.isEmpty())
-                ? fileStorageService.upload(capa, "capas") // "capas" é o nome do bucket
+                ? fileStorageService.upload(capa, capaBucket)
                 : null;
 
-        // 2. Cria a entidade com as URLs retornadas
         Podcast podcast = new Podcast();
         podcast.setTitulo(dto.titulo());
         podcast.setDescricao(dto.descricao());
         podcast.setAudioUrl(audioUrl);
         podcast.setCapaUrl(capaUrl);
 
-        // 3. Salva no banco de dados
         Podcast savedPodcast = podcastRepository.save(podcast);
         return toDto(savedPodcast);
     }
@@ -84,18 +90,18 @@ public class PodcastService {
 
     @Transactional
     public void delete(Long id) {
-        if (!podcastRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Podcast não encontrado com o id: " + id);
-        }
-
-        Podcast podcast = podcastRepository.findById(id).get();
+        // OTIMIZAÇÃO: Busca o podcast uma única vez
+        Podcast podcast = podcastRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Podcast não encontrado com o id: " + id));
+        
+        // Deleta os arquivos do storage
         fileStorageService.delete(podcast.getAudioUrl());
         fileStorageService.delete(podcast.getCapaUrl());
 
-        podcastRepository.deleteById(id);
+        // Deleta a entidade do banco
+        podcastRepository.delete(podcast);
     }
 
-    // Método helper para converter Entidade para DTO
     private PodcastResponseDto toDto(Podcast podcast) {
         return new PodcastResponseDto(
                 podcast.getId(),

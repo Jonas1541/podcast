@@ -7,6 +7,7 @@ import com.positivo.podcast.entities.Noticia;
 import com.positivo.podcast.exceptions.ResourceNotFoundException;
 import com.positivo.podcast.repositories.NoticiaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value; // IMPORTAR @Value
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,10 @@ public class NoticiaService {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    // INJETA O NOME DO BUCKET DAS PROPRIEDADES
+    @Value("${minio.bucket.capas-noticias}")
+    private String noticiaCapaBucket;
 
     @Transactional(readOnly = true)
     public List<NoticiaResponseDto> findAll() {
@@ -50,12 +55,13 @@ public class NoticiaService {
 
     public NoticiaResponseDto createWithUpload(NoticiaUploadDto dto, MultipartFile capa) {
         String capaUrl = (capa != null && !capa.isEmpty())
-                ? fileStorageService.upload(capa, "capas-noticias") // bucket
+                // USA A VARIÁVEL INJETADA AQUI
+                ? fileStorageService.upload(capa, noticiaCapaBucket)
                 : null;
 
         Noticia noticia = new Noticia();
         noticia.setTitulo(dto.titulo());
-        noticia.setDescricao(dto.descricao()); // Ajustado para 'descricao'
+        noticia.setDescricao(dto.descricao());
         noticia.setCapaUrl(capaUrl);
 
         Noticia savedNoticia = noticiaRepository.save(noticia);
@@ -82,7 +88,7 @@ public class NoticiaService {
 
         fileStorageService.delete(noticia.getCapaUrl());
 
-        noticiaRepository.deleteById(id);
+        noticiaRepository.deleteById(id); // Pode ser trocado por noticiaRepository.delete(noticia)
     }
 
     private NoticiaResponseDto toDto(Noticia noticia) {
